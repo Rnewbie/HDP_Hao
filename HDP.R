@@ -1,7 +1,12 @@
 library(Biostrings)
+library(RCurl)
+
 getwd()
 #setwd("/Users/sawsimeon/Downloads")
-data <- read.csv("HDP_DATA.csv", header = TRUE)
+#data <- read.csv("HDP_DATA.csv", header = TRUE)
+link <- "https://raw.githubusercontent.com/Rnewbie/HDP_Hao/master/HDP_DATA.csv"
+csv <- getURL(link)
+data <- read.csv(text = csv, header = TRUE)
 df <- apply(data, 2, unique)
 ok <- do.call(rbind.data.frame, df)
 data <- t(ok)
