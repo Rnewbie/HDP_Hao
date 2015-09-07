@@ -115,6 +115,113 @@ J48_testing <- function(x) {
   return(results)
 }
 
+### Physiochemical Properties
+
+
+library(protr)
+cancer <- readFASTA("cancer.fasta")
+fungus <- readFASTA("fungus.fasta")
+gram_positive <- readFASTA("gram_positive.fasta")
+gram_negative <- readFASTA("gram_negative.fasta")
+virus <- readFASTA("virus.fasta")
+mammal <- readFASTA("mammal.fasta")
+
+cancer <- cancer[(sapply(cancer, protcheck))]
+fungus <- fungus[(sapply(fungus, protcheck))]
+gram_positive <- gram_positive[(sapply(gram_positive, protcheck))]
+gram_negative <- gram_negative[(sapply(gram_negative, protcheck))]
+virus <- virus[(sapply(virus, protcheck))]
+mammal <- mammal[(sapply(mammal, protcheck))]
+### function for PCP from AAindex
+pcp_des <- function(x) {
+  library(protr)
+  PCP <- t(sapply(x, extractMoreauBroto, props = AAindex$AccNo, nlag = 1L))
+  PCP <- PCP[, colSums(is.na(PCP)) != nrow(PCP)]
+  return(PCP)
+}
+### generation the Descriptors
+cancer_PCP <- pcp_des(cancer)
+fungus_PCP <- pcp_des(fungus)
+gram_positive_PCP <- pcp_des(gram_positive)
+gram_negative_PCP <- pcp_des(gram_negative)
+virus_PCP <- pcp_des(virus)
+mammal_PCP <- pcp_des(mammal)
+
+#### label the labels 
+cancer_PCP <- as.data.frame(cancer_PCP)
+Label <- c("cancer")
+cancer_PCP <- cbind(Label, cancer_PCP)
+
+fungus_PCP <- as.data.frame(fungus_PCP)
+Label <- c("fungus")
+fungus_PCP <- cbind(Label, fungus_PCP)
+
+gram_positive_PCP <- as.data.frame(gram_positive_PCP)
+Label <- c("gram_positive")
+gram_positive_PCP <- cbind(Label, gram_positive_PCP)
+
+gram_negative_PCP <- as.data.frame(gram_negative_PCP)
+Label <- c("gram_negative")
+gram_negative_PCP <- cbind(Label, gram_negative_PCP)
+
+virus_PCP <- as.data.frame(virus_PCP)
+Label <- c("virus")
+virus_PCP <- cbind(Label, virus_PCP)
+
+mammal_PCP <- as.data.frame(mammal_PCP)
+Label <- c("mammal")
+mammal_PCP <- cbind(Label, mammal_PCP)
+
+PCP_data <- rbind(cancer_PCP, fungus_PCP, gram_positive_PCP, gram_negative_PCP, virus_PCP, mammal_PCP)
+#### REAdy
+
+ctdDes <- function(x) {
+  c(extractCTDC(x), ### composition
+    extractCTDT(x), ### transition
+    extractCTDD(x)) ### distribution
+}
+
+cancer_CTD <- t(sapply(cancer, ctdDes))
+fungus_CTD <- t(sapply(fungus, ctdDes))
+gram_positive_CTD <- t(sapply(gram_positive, ctdDes))
+gram_negative_CTD <- t(sapply(gram_negative, ctdDes))
+virus_CTD <- t(sapply(virus, ctdDes))
+mammal_CTD <- t(sapply(mammal, ctdDes))
+
+
+cancer_CTD <- as.data.frame(cancer_CTD)
+Label <- c("cancer")
+cancer_CTD <- cbind(Label, cancer_CTD)
+
+fungus_CTD <- as.data.frame(fungus_CTD)
+Label <- c("fungus")
+fungus_CTD <- cbind(Label, fungus_CTD)
+
+gram_positive_CTD <- as.data.frame(gram_positive_CTD)
+Label <- c("gram_positive")
+gram_positive_CTD <- cbind(Label, gram_positive_CTD)
+
+gram_negative_CTD <- as.data.frame(gram_negative_CTD)
+Label <- c("gram_negative")
+gram_negative_CTD <- cbind(Label, gram_negative_CTD)
+
+virus_CTD <- as.data.frame(virus_CTD)
+Label <- c("virus")
+virus_CTD <- cbind(Label, virus_CTD)
+
+mammal_CTD <- as.data.frame(mammal_CTD)
+Label <- c("mammal")
+mammal_CTD <- cbind(Label, mammal_CTD)
+
+CTD_data <- rbind(cancer_CTD, fungus_CTD, gram_positive_CTD, gram_negative_CTD, virus_CTD, mammal_CTD)
+
+input <- list(composition = big_data,
+              AAindex = PCP_data,
+              CTD = CTD_data)
+results_train <- lapply(input, function(x) {
+  model <- J48_training(x)
+  return(model)
+})
 
 
 
@@ -127,4 +234,86 @@ J48_testing <- function(x) {
 
 
 
+
+
+
+
+
+extractCTDD = function (x) {
+  
+  if (protcheck(x) == FALSE) stop('x has unrecognized amino acid type')
+  
+  group1 = list(hydrophobicity  = c('R', 'K', 'E', 'D', 'Q', 'N'),
+                normwaalsvolume = c('G', 'A', 'S', 'T', 'P', 'D', 'C'),
+                polarity        = c('L', 'I', 'F', 'W', 'C', 'M', 'V', 'Y'),
+                polarizability  = c('G', 'A', 'S', 'D', 'T'),
+                charge          = c('K', 'R'),
+                secondarystruct = c('E', 'A', 'L', 'M', 'Q', 'K', 'R', 'H'),
+                solventaccess   = c('A', 'L', 'F', 'C', 'G', 'I', 'V', 'W'))
+  
+  group2 = list(hydrophobicity  = c('G', 'A', 'S', 'T', 'P', 'H', 'Y'),
+                normwaalsvolume = c('N', 'V', 'E', 'Q', 'I', 'L'),
+                polarity        = c('P', 'A', 'T', 'G', 'S'),
+                polarizability  = c('C', 'P', 'N', 'V', 'E', 'Q', 'I', 'L'),
+                charge          = c('A', 'N', 'C', 'Q', 'G', 'H', 'I', 'L', 
+                                    'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V'),
+                secondarystruct = c('V', 'I', 'Y', 'C', 'W', 'F', 'T'),
+                solventaccess   = c('R', 'K', 'Q', 'E', 'N', 'D'))
+  
+  group3 = list(hydrophobicity  = c('C', 'L', 'V', 'I', 'M', 'F', 'W'),
+                normwaalsvolume = c('M', 'H', 'K', 'F', 'R', 'Y', 'W'),
+                polarity        = c('H', 'Q', 'R', 'K', 'N', 'E', 'D'),
+                polarizability  = c('K', 'M', 'H', 'F', 'R', 'Y', 'W'),
+                charge          = c('D', 'E'),
+                secondarystruct = c('G', 'N', 'P', 'S', 'D'),
+                solventaccess   = c('M', 'S', 'P', 'T', 'H', 'Y'))
+  
+  xSplitted = strsplit(x, split = '')[[1]]
+  n  = nchar(x)
+  
+  G = vector('list', 7)
+  for (i in 1:7) G[[i]] = rep(NA, n)
+  
+  # Get groups for each property & each amino acid
+  
+  for (i in 1:7) {
+    try(G[[i]][which(xSplitted %in% group1[[i]])] <- 'G1')
+    try(G[[i]][which(xSplitted %in% group2[[i]])] <- 'G2')
+    try(G[[i]][which(xSplitted %in% group3[[i]])] <- 'G3')
+  }
+  
+  # Compute Distribution
+  
+  D = vector('list', 7)
+  for (i in 1:7) D[[i]] = matrix(ncol = 5, nrow = 3)
+  
+  for (i in 1:7) {
+    inds = which(G[[i]] == 'G1')
+    quartiles <- floor(length(inds) * c(0.25, 0.5, 0.75))
+    D[[i]][1, ] = ifelse(length(inds)>0,
+                         (inds[c(1, ifelse(quartiles>0, quartiles, 1), length(inds))])*100/n,
+                         0)
+    inds = which(G[[i]] == 'G2')
+    quartiles <- floor(length(inds) * c(0.25, 0.5, 0.75))
+    D[[i]][2, ] = ifelse(length(inds)>0,
+                         (inds[c(1, ifelse(quartiles>0, quartiles, 1), length(inds))])*100/n,
+                         0)
+    inds = which(G[[i]] == 'G3')
+    quartiles <- floor(length(inds) * c(0.25, 0.5, 0.75))
+    D[[i]][3, ] = ifelse(length(inds)>0,
+                         (inds[c(1, ifelse(quartiles>0, quartiles, 1), length(inds))])*100/n,
+                         0)
+  }
+  
+  D = do.call(rbind, D)
+  D = as.vector(t(D))
+  
+  names(D) = paste(rep(paste('prop', 1:7, sep = ''), each = 15),
+                   rep(rep(c('.G1', '.G2', '.G3'), each = 5), times = 7),
+                   rep(paste('.residue', c('0', '25', '50', '75', '100'), 
+                             sep = ''), times = 21), sep = '')
+  
+  return(D)
+  
+}
 
