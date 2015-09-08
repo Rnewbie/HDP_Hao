@@ -189,6 +189,16 @@ virus_CTD <- t(sapply(virus, ctdDes))
 mammal_CTD <- t(sapply(mammal, ctdDes))
 
 
+num_cores <- detectCores()
+cl <- makeCluster(num_cores)
+cancer_CTD <- t(parSapply(cancer, ctdDes))
+
+
+stopCluster(cl)
+
+
+
+
 cancer_CTD <- as.data.frame(cancer_CTD)
 Label <- c("cancer")
 cancer_CTD <- cbind(Label, cancer_CTD)
@@ -316,4 +326,18 @@ extractCTDD = function (x) {
   return(D)
   
 }
+
+### Paran analysis to obtain paren analysis  and PCA
+### df shoudld have the descriptors for the
+df <- load("composition.RData")
+df = df[, -nearZeroVar(df, uniquecut = 1)]
+library(paran)
+paran(df, iterations = 5000)
+pca <- prcomp(df, retx=TRUE,scale.=TRUE)
+summary(pca)
+
+
+
+
+
 
