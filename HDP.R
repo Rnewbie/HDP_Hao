@@ -119,7 +119,7 @@ J48_testing <- function(x) {
 
 
 library(protr)
-cancer <- readFASTA("cancer.fasta")
+cancer <- readFASTA("cancer.fasta")[[1]]
 fungus <- readFASTA("fungus.fasta")
 gram_positive <- readFASTA("gram_positive.fasta")
 gram_negative <- readFASTA("gram_negative.fasta")
@@ -547,6 +547,37 @@ extractGeary = function (x, props = c('CIDH920105', 'BHAR880101',
   return(Geary)
   
 }
+
+
+
+randomforest_crossvalidation <- function(x) {
+  results <- list(100)
+  for (i in 1:100) {
+    in_trian <- createDataPartition(x$Label, p = 0.80, list = FALSE)
+    myData <- x[in_train, ]
+    test <- x[-in_train, ]
+    k = 10
+    index <- sample(1:k, nrow(myData), replace = TRUE)
+    model_train <- J48(Label~., data = train)
+    eval_j48 <- evaluate_Weka_classifier(model_train, numFolds = 10, complexity = FALSE, seed = 1, class = TRUE)
+    confusionmatrix <- eval_j48$confusionMatrix
+    results[[i]] <- as.numeric(confusionmatrix)
+  }
+  return(results)
+}
+
+
+k = 10
+index <- sample(1:k, nrow(myData), replace = TRUE)
+folds <- 1:k
+myRes <- data.frame()
+for (j in 1:k)
+  training <- subset(myData, index %in% folds[-j])
+testing <- subset(myData, index %in% c(j))
+ctrl <- caret::trainControl(method = "repeatedcv", number = 10, repeats = 1)
+tune <- train(pIC50 ~., data = training, method = "pls", tunLength = 10, trControl = ctrl)
+model <- plsr(pIC5~., data = training, ncomp = tune$bestTune[[1]])
+prediction <- predict(model, testing, ncomp = tune$bestTune[[1]])
 
 
 
