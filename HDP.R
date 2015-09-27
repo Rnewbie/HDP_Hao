@@ -7,69 +7,89 @@ getwd()
 link <- "https://raw.githubusercontent.com/Rnewbie/HDP_Hao/master/HDP_DATA.csv"
 csv <- getURL(link)
 data <- read.csv(text = csv, header = TRUE)
-df <- apply(data, 2, unique)
-ok <- do.call(rbind.data.frame, df)
-data <- t(ok)
-data <- data.frame(data)
+#df <- apply(data, 2, unique)
+#ok <- do.call(rbind.data.frame, df)
+#data <- t(ok)
+#data <- data.frame(data)
 ### substracting
 cancer <- data$cancer
+cancer <- as.data.frame(cancer)
 fungus <- data$fungus
-gram_positive <- data$gram_positive
-gram_negative <- data$gram_negative
+fungus <- as.data.frame(fungus)
+bacteria <- data$bacteria
+bacteria <- as.data.frame(bacteria)
 virus <- data$virus
+virus <- as.data.frame(virus)
 mammal <- data$mammal
-#setwd("/Volumes/SAW SIMEON/HDP")
+mammal <- as.data.frame(mammal)
+#### remove duplicated 
+index_cancer <- which(duplicated(cancer))
+cancer <- cancer[-index_cancer, ]
+index_fungus <- which(duplicated(fungus))
+fungus <- fungus[-index_fungus, ]
+index_bacteria <- which(duplicated(bacteria))
+bacteria <- bacteria[-index_bacteria, ]
+index_virus <- which(duplicated(virus))
+virus <- virus[-index_virus, ]
+index_mammal <- which(duplicated(mammal))
+mammal <- mammal[-index_mammal, ]
+
+
+
+setwd("/Volumes/SAW SIMEON/HDP_Hao")
 
 
 ### writing fasta files
 cancer <- AAStringSet(cancer)
 names_cancer <- rep("cancer", length(cancer))
 fungus <- AAStringSet(fungus)
-gram_positive <- AAStringSet(gram_positive)
-gram_negative <- AAStringSet(gram_negative)
+bacteria <- AAStringSet(bacteria)
 virus <- AAStringSet(virus)
 mammal <- AAStringSet(mammal)
 ###
 writeXStringSet(cancer, file = "cancer.fasta", width = 80)
 writeXStringSet(fungus, file = "fungus.fasta", width = 80)
-writeXStringSet(gram_positive, file = "gram_positive.fasta", width = 80)
-writeXStringSet(gram_negative, file = "gram_negative.fasta", width = 80)
+writeXStringSet(bacteria, file = "bacteria.fasta", width = 80)
 writeXStringSet(virus, file = "virus.fasta", width = 80)
 writeXStringSet(mammal, file = "mammal.fasta", width = 80)
 ### read FASta
 library(protr)
 cancer <- readFASTA("cancer.fasta")
 fungus <- readFASTA("fungus.fasta")
-gram_positive <- readFASTA("gram_positive.fasta")
-gram_negative <- readFASTA("gram_negative.fasta")
+bacteria <- readFASTA("bacteria.fasta")
 virus <- readFASTA("virus.fasta")
 mammal <- readFASTA("mammal.fasta")
 ### removed wired protein
 cancer <- cancer[(sapply(cancer, protcheck))]
 fungus <- fungus[(sapply(fungus, protcheck))]
-gram_positive <- gram_positive[(sapply(gram_positive, protcheck))]
-gram_negative <- gram_negative[(sapply(gram_negative, protcheck))]
+bacteria <- bacteria[(sapply(bacteria, protcheck))]
 virus <- virus[(sapply(virus, protcheck))]
 mammal <- mammal[(sapply(mammal, protcheck))]
 ### function for amino acid composition, dipeptide composition, tripeptide composition
 composition <- function(x) {
   library(protr)
-  c(extractAAC(x), extractDC(x), extractTC(x))
+  c(extractAAC(x))
 }
 ### generation the Descriptors
-cancer_des <- t(sapply(cancer, composition))
-fungus_des <- t(sapply(fungus, composition))
-gram_positive_des <- t(sapply(gram_positive, composition))
-gram_negative_des <- t(sapply(gram_negative, composition))
-virus_des <- t(sapply(virus, composition))
-mammal_des <- t(sapply(mammal, composition))
+cancer_des <- t(sapply(cancer, extractAAC))
+fungus_des <- t(sapply(fungus, extractAAC))
+bacteria_des <- t(sapply(bacteria, extractAAC))
+virus_des <- t(sapply(virus, extractAAC))
+mammal_des <- t(sapply(mammal, extractAAC))
 #### label the labels 
-cancer_des$Label <- "cancer"
-fungus_des$Label <- "fugus"
-gram_positive_des$Label <- "gram_positive"
-gram_negative$Label <- "gram_negative"
-virus_des$Label <- "virus"
-big_data <- rbind(cancer_des, fungus_des, gram_positive_des, gram_negative_des, virus_des, mammal_des)
+cancer_des <- as.data.frame(cancer_des)
+cancer_des$Label <- "Cancer"
+fungus_des <- as.data.frame(fungus_des)
+fungus_des$Label <- "Fungus"
+bacteria_des <- as.data.frame(bacteria_des)
+bacteria_des$Label <- "Bacteria"
+virus_des <- as.data.frame(virus_des)
+virus_des$Label <- "Virus"
+mammal_des <- as.data.frame(mammal_des)
+mammal_des$Label <- "Mammal"
+data <- rbind(cancer_des, fungus_des, bacteria_des, virus_des, mammal_des)
+saveRDS(data, file = "data.Rda")
+data <- readRDS("data.Rda")
 #### training results using J48
 J48_training <- function(x) {
   
