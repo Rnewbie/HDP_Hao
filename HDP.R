@@ -1,5 +1,7 @@
 library(Biostrings)
 library(RCurl)
+library(RWeka)
+library(caret)
 
 getwd()
 #setwd("/Users/sawsimeon/Downloads")
@@ -7,10 +9,6 @@ getwd()
 link <- "https://raw.githubusercontent.com/Rnewbie/HDP_Hao/master/HDP_DATA.csv"
 csv <- getURL(link)
 data <- read.csv(text = csv, header = TRUE)
-#df <- apply(data, 2, unique)
-#ok <- do.call(rbind.data.frame, df)
-#data <- t(ok)
-#data <- data.frame(data)
 ### substracting
 cancer <- data$cancer
 cancer <- as.data.frame(cancer)
@@ -35,8 +33,25 @@ index_mammal <- which(duplicated(mammal))
 mammal <- mammal[-index_mammal, ]
 
 
+setwd("/Volumes/SAW SIMEON 1/HDP_Hao")
 
-setwd("/Volumes/SAW SIMEON/HDP_Hao")
+### getting Negative Data set
+library(RCurl)
+library(seqinr)
+library(protr)
+
+link <- "http://cs.gmu.edu/~ashehu/sites/default/files/tools/EFC-FCBF_AMPRecognition/data/fasta_files/Xiao_GBMR4_Training_DECOYS.fasta"
+x <- getURL(link)
+write.fasta(sequence = x, names(x), 
+            nbchar = 80,  file.out = "negative_DNA.fasta")
+
+DNA <- readFASTA("negative_DNA.fasta")
+DNA <- t(sapply(DNA, s2c))
+Protein <- t(sapply(DNA, seqinr::translate))
+Protein <- lapply(Protein, str_replace_all,"[[:punct:]]", "*")
+write.fasta(sequence=Protein, names(Protein), 
+            nbchar = 80, file.out = "negative_Protein.fasta")
+
 
 
 ### writing fasta files
@@ -52,19 +67,23 @@ writeXStringSet(fungus, file = "fungus.fasta", width = 80)
 writeXStringSet(bacteria, file = "bacteria.fasta", width = 80)
 writeXStringSet(virus, file = "virus.fasta", width = 80)
 writeXStringSet(mammal, file = "mammal.fasta", width = 80)
-### read FASta
+### read FASTA
 library(protr)
 cancer <- readFASTA("cancer.fasta")
 fungus <- readFASTA("fungus.fasta")
 bacteria <- readFASTA("bacteria.fasta")
 virus <- readFASTA("virus.fasta")
 mammal <- readFASTA("mammal.fasta")
+negative <- protr::readFASTA("negative_Protein.fasta")
+
 ### removed wired protein
 cancer <- cancer[(sapply(cancer, protcheck))]
 fungus <- fungus[(sapply(fungus, protcheck))]
 bacteria <- bacteria[(sapply(bacteria, protcheck))]
 virus <- virus[(sapply(virus, protcheck))]
 mammal <- mammal[(sapply(mammal, protcheck))]
+negative <- negative[(sapply(negative, protcheck))]
+
 ### function for amino acid composition, dipeptide composition, tripeptide composition
 composition <- function(x) {
   library(protr)
@@ -76,6 +95,7 @@ fungus_des <- t(sapply(fungus, extractAAC))
 bacteria_des <- t(sapply(bacteria, extractAAC))
 virus_des <- t(sapply(virus, extractAAC))
 mammal_des <- t(sapply(mammal, extractAAC))
+negative_des <- t(sapply(negative, extractAAC))
 #### label the labels 
 cancer_des <- as.data.frame(cancer_des)
 cancer_des$Label <- "Cancer"
@@ -87,53 +107,191 @@ virus_des <- as.data.frame(virus_des)
 virus_des$Label <- "Virus"
 mammal_des <- as.data.frame(mammal_des)
 mammal_des$Label <- "Mammal"
-data <- rbind(cancer_des, fungus_des, bacteria_des, virus_des, mammal_des)
-saveRDS(data, file = "data.Rda")
-data <- readRDS("data.Rda")
+negative_des <- as.data.frame(negative_des)
+negative_des$Label <- "Negative"
+
+cancer <- rbind(cancer_des, negative_des)
+fungus <- rbind(fungus_des, negative_des)
+bacteria <- rbind(fungus_des, negative_des)
+virus <- rbind(virus_des, negative_des)
+mammal <- rbind(mammal_des, negative_des)
+
+input <- list(cancer = cancer, funus = fungus, bacteira = bacteria, 
+              virus = virus, mammal = mammal)
+
+
+
 #### training results using J48
 J48_training <- function(x) {
   
   results <- list(100)
   for (i in 1:100) {
-    in_trian <- createDataPartition(x$Label, p = 0.80, list = FALSE)
+    in_trian <- caret::createDataPartition(x$Label, p = 0.80, list = FALSE)
     train <- x[in_train, ]
     test <- x[-in_train, ]
-    model_train <- J48(Label~., data = train)
+    model_train <- RWeka::J48(Label~., data = train)
     summary <- summary(model_train)
     confusionmatrix <- summary$confusionMatrix
     results[[i]] <- as.numeric(confusionmatrix)
   }
   return(results)
 }
+
+mean_and_sd <- function(x) {
+  c(round(mean(x, na.rm = TRUE), digits = 4),
+    round(sd(x, na.rm = TRUE), digits = 4))
+}
+
+J48_train <- function(x) {
+  ok <- J48_training(x)
+  results <- data.frame(ok)
+  data <- data.frame(results)
+  m = ncol(data)
+  ACC  <- matrix(nrow = m, ncol = 1)
+  SENS  <- matrix(nrow = m, ncol = 1)
+  SPEC  <-matrix(nrow = m, ncol = 1)
+  MCC <- matrix(nrow = m, ncol = 1)
+  
+  for(i in 1:m){ 
+    ACC[i,1]  = (data[1,i]+data[4,i])/(data[1,i]+data[2,i]+data[3,i]+data[4,i])*100
+    SENS[i,1]  =  (data[4,i])/(data[3,i]+data[4,i])*100
+    SPEC[i,1]  = (data[1,i]/(data[1,i]+data[2,i]))*100
+    MCC1      = (data[1,i]*data[4,i]) - (data[2,i]*data[3,i])
+    MCC2      =  (data[4,i]+data[2,i])*(data[4,i]+data[3,i])
+    MCC3      =  (data[1,i]+data[2,i])*(data[1,i]+data[3,i])
+    MCC4  =  sqrt(MCC2)*sqrt(MCC3)
+    
+    
+    MCC[i,1]  = MCC1/MCC4
+  }
+  results_ACC <- mean_and_sd(ACC)
+  results_SENS <- mean_and_sd(SENS)
+  results_SPEC <- mean_and_sd(SPEC)
+  results_MCC <- mean_and_sd(MCC)
+  return(data.frame(c(results_ACC, results_SENS, results_SPEC, results_MCC)))
+}
+
 #### 10-fold results using J48
 J48_10fold <- function(x) {
   results <- list(100)
   for (i in 1:100) {
-    in_trian <- createDataPartition(x$Label, p = 0.80, list = FALSE)
+    in_trian <- caret::createDataPartition(x$Label, p = 0.80, list = FALSE)
     train <- x[in_train, ]
     test <- x[-in_train, ]
-    model_train <- J48(Label~., data = train)
-    eval_j48 <- evaluate_Weka_classifier(model_train, numFolds = 10, complexity = FALSE, seed = 1, class = TRUE)
+    model_train <- RWeka::J48(Label~., data = train)
+    eval_j48 <- RWeka::evaluate_Weka_classifier(model_train, numFolds = 10, complexity = FALSE, seed = 1, class = TRUE)
     confusionmatrix <- eval_j48$confusionMatrix
     results[[i]] <- as.numeric(confusionmatrix)
   }
   return(results)
 }
 
+J48_cross_validation <- function(x) {
+  ok <- J48_10fold(x)
+  results <- data.frame(ok)
+  data <- data.frame(results)
+  m = ncol(data)
+  ACC  <- matrix(nrow = m, ncol = 1)
+  SENS  <- matrix(nrow = m, ncol = 1)
+  SPEC  <-matrix(nrow = m, ncol = 1)
+  MCC <- matrix(nrow = m, ncol = 1)
+  
+  for(i in 1:m){ 
+    ACC[i,1]  = (data[1,i]+data[4,i])/(data[1,i]+data[2,i]+data[3,i]+data[4,i])*100
+    SENS[i,1]  =  (data[4,i])/(data[3,i]+data[4,i])*100
+    SPEC[i,1]  = (data[1,i]/(data[1,i]+data[2,i]))*100
+    MCC1      = (data[1,i]*data[4,i]) - (data[2,i]*data[3,i])
+    MCC2      =  (data[4,i]+data[2,i])*(data[4,i]+data[3,i])
+    MCC3      =  (data[1,i]+data[2,i])*(data[1,i]+data[3,i])
+    MCC4  =  sqrt(MCC2)*sqrt(MCC3)
+    
+    
+    MCC[i,1]  = MCC1/MCC4
+  }
+  results_ACC <- mean_and_sd(ACC)
+  results_SENS <- mean_and_sd(SENS)
+  results_SPEC <- mean_and_sd(SPEC)
+  results_MCC <- mean_and_sd(MCC)
+  return(data.frame(c(results_ACC, results_SENS, results_SPEC, results_MCC)))
+}
+
 ### testing results using J48
 J48_testing <- function(x) {
   results <- list(100)
   for (i in 1:100) {
-    in_trian <- createDataPartition(x$Label, p = 0.80, list = FALSE)
+    in_trian <- caret::createDataPartition(x$Label, p = 0.80, list = FALSE)
     train <- x[in_train, ]
     test <- x[-in_train, ]
-    model_train <- J48(Label~., data = train)
-    eval_external <- evaluate_Weka_classifier(model_train, newdata = test, numFolds = 0, complexity = FALSE, seed = 1, class = TRUE)
+    model_train <- RWeka::J48(Label~., data = train)
+    eval_external <- RWeka::evaluate_Weka_classifier(model_train, newdata = test, numFolds = 0, complexity = FALSE, seed = 1, class = TRUE)
     confusionmatrix <- eval_external$confusionMatrix
     results[[i]] <- as.numeric(confusionmatrix)
   }
   return(results)
 }
+
+
+J48_external <- function(x) {
+  ok <- J48_testing(x)
+  results <- data.frame(ok)
+  data <- data.frame(results)
+  m = ncol(data)
+  ACC  <- matrix(nrow = m, ncol = 1)
+  SENS  <- matrix(nrow = m, ncol = 1)
+  SPEC  <-matrix(nrow = m, ncol = 1)
+  MCC <- matrix(nrow = m, ncol = 1)
+  
+  for(i in 1:m){ 
+    ACC[i,1]  = (data[1,i]+data[4,i])/(data[1,i]+data[2,i]+data[3,i]+data[4,i])*100
+    SENS[i,1]  =  (data[4,i])/(data[3,i]+data[4,i])*100
+    SPEC[i,1]  = (data[1,i]/(data[1,i]+data[2,i]))*100
+    MCC1      = (data[1,i]*data[4,i]) - (data[2,i]*data[3,i])
+    MCC2      =  (data[4,i]+data[2,i])*(data[4,i]+data[3,i])
+    MCC3      =  (data[1,i]+data[2,i])*(data[1,i]+data[3,i])
+    MCC4  =  sqrt(MCC2)*sqrt(MCC3)
+    
+    
+    MCC[i,1]  = MCC1/MCC4
+  }
+  results_ACC <- mean_and_sd(ACC)
+  results_SENS <- mean_and_sd(SENS)
+  results_SPEC <- mean_and_sd(SPEC)
+  results_MCC <- mean_and_sd(MCC)
+  return(data.frame(c(results_ACC, results_SENS, results_SPEC, results_MCC)))
+}
+
+results_J48 <- function(x) {
+  c(J48_train(x), J48_cross_validation(x), J48_external(x))
+}
+
+library(parallel)
+library(doSNOW)
+cl <- makeCluster(8)
+registerDoSNOW(cl)
+clusterExport(cl = cl, ls())
+
+result_J48_performance <- parLapply(cl = cl, input, function(x) {
+  models <- results_J48(x)
+  return(models)
+})
+
+stopCluster(cl)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### Physiochemical Properties
 
