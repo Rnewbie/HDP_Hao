@@ -18,5 +18,9 @@ write.fasta(sequence=Protein, names(Protein),
 negative <- protr::readFASTA("negative_Protein.fasta")
 negative <- negative[(sapply(negative, protcheck))]
 
+training <- c(99.38, 0.07, 99.44, 0.08, 99.08, 0.21, 0.98, 0.00)
+cross_validata <- c(98.12, 0.13, 98.55, 0.10)
+
+
 
 

@@ -105,10 +105,73 @@ bacteria_des <- as.data.frame(bacteria_des)
 bacteria_des$Label <- "Bacteria"
 virus_des <- as.data.frame(virus_des)
 virus_des$Label <- "Virus"
-mammal_des <- as.data.frame(mammal_des)
-mammal_des$Label <- "Mammal"
-negative_des <- as.data.frame(negative_des)
-negative_des$Label <- "Negative"
+#mammal_des <- as.data.frame(mammal_des)
+#mammal_des$Label <- "Mammal"
+#negative_des <- as.data.frame(negative_des)
+#negative_des$Label <- "Negative"
+combine_data <- rbind(cancer_des, fungus_des,
+                      bacteria_des, virus_des)
+combine_data$Label <- as.factor(combine_data$Label)
+
+fit <- RWeka::J48(Label ~., data = combine_data)
+results <- summary(fit)
+results <- results$confusionMatrix
+results_integer <- as.numeric(results)
+results <- results_integer
+
+Bacteria <- cbind(results[[1]], (results[[5]] + results[[9]] + results[[13]]),
+                  (results[[2]] + results[[3]] + results[[4]]), (results[[6]] + results[[11]] + results[[16]]))
+Cancer <- cbind(results[[6]], (results[[2]] + results[[10]] + results[[14]]), 
+                (results[[5]] + results[[7]] + results[[8]]), (results[[1]] + results[[11]] + results[[16]]))
+Fungus <- cbind(results[[11]], (results[[3]] + results[[7]] + results[[15]]),
+                (results[[9]] + results[[10]] + results[[12]]), (results[[1]] + results[[6]] + results[[16]]))
+Virus <- cbind(results[[16]], (results[[4]] + results[[8]] + results[[12]]), 
+               (results[[13]] + results[[14]] + results[[15]]), (results[[1]] + results[[6]] + results[[11]]))
+
+                  
+ok <- data.frame(bacteria)
+TP <- seq(from = 1, to = 400, by = 4)
+FN <- seq(from = 2, to = 400, by = 4)
+FP <- seq(from = 3, to = 400, by = 4)
+TN <- seq(from = 4, to = 400, by = 4)
+
+results <- mapply(c, ok[TP], ok[FN], ok[FP], ok[TN])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 cancer <- rbind(cancer_des, negative_des)
 fungus <- rbind(fungus_des, negative_des)
