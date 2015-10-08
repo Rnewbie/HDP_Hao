@@ -109,6 +109,11 @@ virus_des$Label <- "Virus"
 #mammal_des$Label <- "Mammal"
 #negative_des <- as.data.frame(negative_des)
 #negative_des$Label <- "Negative"
+cancer_des <- dplyr::sample_n(cancer_des, size = 450, replace = FALSE)
+fungus_des <- dplyr::sample_n(fungus_des, size = 450, replace = FALSE)
+bacteria_des <- dplyr::sample_n(bacteria_des, size = 450, replace = FALSE)
+virus_des <- dplyr::sample_n(virus_des, size = 450, replace = FALSE)
+
 combine_data <- rbind(cancer_des, fungus_des,
                       bacteria_des, virus_des)
 combine_data$Label <- as.factor(combine_data$Label)
