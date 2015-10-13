@@ -12,7 +12,9 @@ First, choose the file's format in which your protein sequences stored. You can 
 Predict the activity class of the pasted protein sequence by clicking *Submit* button. After a few seconds, the prediction resutls should appear. 
 ***
 ![](Fig_HDDP_3.png)
+***
 Click the  *Download CSV* button to save the predicted results as a csv file. 
+***
 
 
 
