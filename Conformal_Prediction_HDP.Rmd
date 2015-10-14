@@ -1,0 +1,44 @@
+---
+title: "HDP"
+author: "Rnewbie"
+date: "October 14, 2015"
+output: html_document
+---
+
+Conformal Prediction using random forest
+
+```{r, cache = TRUE}
+library(caret)
+library(conformal)
+library(randomForest)
+showClass("ConformalClassification")
+data <- readRDS("data.Rda")
+in_train <- createDataPartition(data$Label, p = 0.8, list = FALSE)
+train <- data[in_train, ]
+test <- data[-in_train, ]
+algorithm <- "J48"
+trControl <- trainControl(method = "cv", number = 5, savePredictions = TRUE)
+set.seed(3)
+### use test set only to save time
+model <- train(Label~., data = test, method = "rf",  trControl = trControl, predict.all = TRUE)
+
+
+example <- ConformalClassification$new()
+example$CalculateCVScores(model = model)
+example$CalculatePValues(new.data = test)
+p_values <- (example$p.values$P.values)
+actual <- test$Label
+conformal_prediction_results <- cbind(p_values, actual)
+print(p_values)
+significant <- example$p.values$Significance_p.values
+
+```
+
+
+```{r, cache = TRUE}
+prediction_results <- as.data.frame(p_values)
+actual <- test$Label
+actual <- data.frame(actual)
+conformal_prediction_results <- cbind(prediction_results, actual)
+print(conformal_prediction_results)
+```

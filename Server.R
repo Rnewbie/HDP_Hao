@@ -5,18 +5,20 @@ library(caret)
 library(randomForest)
 library(shinyjs)
 library(dplyr)
+library(RWeka)
 
 
 fit <- readRDS("model.Rda")
+data <- readRDS("data.Rda")
+fit <- RWeka::J48(Label~., data = data)
+
 
 shinyServer(function(input, output, session) {
   
   
   observe({
     FASTADATA <- ''
-    fastaexample <- '>HDP-Mammal
-RVKRVWPLVIRTVIAGYNLYRAIKKK
->HDP-Bacteria
+    fastaexample <- '>HDP-Bacteria
 KVLKAAAKAALNAVLVGANA
 '
     if(input$addlink>0) {
@@ -58,7 +60,7 @@ KVLKAAAKAALNAVLVGANA
         test <- data.frame(ACC)
         Prediction <- predict(fit, test)
         Prediction <- as.data.frame(Prediction)
-        Protein <- cbind(Name = rownames(Prediction, Prediction))
+        Protein <- cbind(Name = rownames(test, test))
         results <- cbind(Protein, Prediction)
         results <- data.frame(results, row.names=NULL)
         print(results)
@@ -70,7 +72,7 @@ KVLKAAAKAALNAVLVGANA
         test <- data.frame(ACC)
         Prediction <- predict(fit, test)
         Prediction <- as.data.frame(Prediction)
-        Protein <- cbind(Protein = rownames(Prediction, Prediction))
+        Protein <- cbind(Protein = rownames(test, test))
         results <- cbind(Protein, Prediction)
         results <- data.frame(results, row.names=NULL)
         print(results)
