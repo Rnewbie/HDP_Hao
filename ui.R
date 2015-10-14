@@ -29,9 +29,9 @@ shinyUI(fluidPage(title="HDPP: Host Defence Peptide Predictor", theme=shinytheme
                              
                              tabPanel("About", titlePanel("Host Defence Peptides"), div(includeMarkdown("about.md"), align="justify")),
                              navbarMenu("Download",
-                                        tabPanel("Data", titlePanel("Data"), tags$a(href="https://github.com/Rnewbie/HDP_Hao", "Click Here!")),
-                                        tabPanel("R Markdown", titlePanel("R Markdown"), tags$a(href="https://github.com/Rnewbie/HDP_Hao/blob/master/combine_results.Rmd", "Click Here!")),
-                                        tabPanel("HTML", titlePanel("HTML"), tags$a(href="https://htmlpreview.github.io/?https://raw.githubusercontent.com/Rnewbie/HDP_Hao/master/combine_results.html", "Click Here!"))),
+                                        tabPanel("Data", titlePanel("Data"), includeMarkdown("data.md")),
+                                        tabPanel("Analysis", titlePanel("Markdown"), includeMarkdown("HDP.md")),
+                                        tabPanel("Github", titlePanel("Github"), tags$a(href="https://github.com/Rnewbie/HDP_Hao", "Click Here!"))),
                              tabPanel("Citing Us", titlePanel("Citing Us"), includeMarkdown("citingus.md")),
                              tabPanel("Contact", titlePanel("Contact"), includeMarkdown("contact.md"))	
                              
