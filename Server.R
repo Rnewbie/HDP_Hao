@@ -5,13 +5,57 @@ library(caret)
 library(randomForest)
 library(shinyjs)
 library(dplyr)
-library(RWeka)
+library(conformal)
 
 
-fit <- readRDS("model.Rda")
-data <- readRDS("data.Rda")
-fit <- RWeka::J48(Label~., data = data)
+fit <- get(load("fit.RData"))
+#data <- readRDS("data.Rda")
+#bacteria <- subset(data, Label == "Bacteria")
+#cancer <- subset(data, Label == "Cancer")
+#fungus <- subset(data, Label == "Fungus")
+#virus <- subset(data, Label == "Virus")
+#bacteria <- dplyr::sample_n(bacteria, size = 500, replace = TRUE)
+#cancer <- dplyr::sample_n(cancer, size = 500, replace = TRUE)
+#fungus <- dplyr::sample_n(fungus, size = 500, replace = TRUE)
+#virus <- dplyr::sample_n(virus, size = 500, replace = TRUE)
+#wtf <- dplyr::sample_n(data, size = 4)
+#data <- rbind(bacteria, cancer, fungus, virus)
+example <- get(load("comformal.RData"))
+#Label <- data$Label
+#train <- data[, 1:20]
+#data <- readRDS("data.Rda")
+#showClass("ConformalClassification")
+#trControl <- trainControl(method = "cv", number = 5, savePredictions = TRUE)
+#model <- train(train, Label, data = data, method = "rf", trControl = trControl, predict.all = TRUE)
+#save(model, file = "model.RData")
+#save(example, file = "example.RData")
+#save(model, file = "fit.RData")
+x <- readFASTA("text.fasta")
+x <- x[(sapply(x, protcheck))]
+ACC <- t(sapply(x, extractAAC))
+test <- ACC
+#Prediction <- predict(fit, wtf)
+#Prediction <- as.data.frame(Prediction)
+#Protein <- cbind(Name = rownames(test, test))
+#results <- cbind(Protein, Prediction)
+#results <- data.frame(results, row.names=NULL)
+#example$CalculateCVScores(model = fit)
+example$CalculatePValues(new.data = test)
+p_values <- example$p.values$P.values
+comformal_predictor <- ConformalClassification$new()
+comformal_predictor$CalculateCVScores(model = fit)
+comformal_predictor$CalculatePValues(new.data = test)
+comformal_predictor$p.values
+save(comformal_predictor, file = "comformal.RData")
+#p_values <- data.frame(p_values)
+#p_values <- head(p_values, n = nrow(results))
+#results_all <- cbind(results, p_values)
+#print(results_all)
 
+#example <- ConformalClassification$new()
+#suppressMessages(example$CalculateCVScores(model = model))
+
+#save(example, file = "example.RData")
 
 shinyServer(function(input, output, session) {
   
@@ -63,7 +107,12 @@ KVLKAAAKAALNAVLVGANA
         Protein <- cbind(Name = rownames(test, test))
         results <- cbind(Protein, Prediction)
         results <- data.frame(results, row.names=NULL)
-        print(results)
+        suppressMessages(example$CalculatePValues(new.data = test))
+        p_values <- example$p.values$P.values
+        p_values <- data.frame(p_values)
+        p_values <- head(p_values, n = nrow(results))
+        results_all <- cbind(results, p_values)
+        print(results_all)
       } 
       else {     
         x <- readFASTA(inFile$datapath)
@@ -72,10 +121,15 @@ KVLKAAAKAALNAVLVGANA
         test <- data.frame(ACC)
         Prediction <- predict(fit, test)
         Prediction <- as.data.frame(Prediction)
-        Protein <- cbind(Protein = rownames(test, test))
+        Protein <- cbind(Name = rownames(test, test))
         results <- cbind(Protein, Prediction)
         results <- data.frame(results, row.names=NULL)
-        print(results)
+        suppressMessages(example$CalculatePValues(new.data = test))
+        p_values <- example$p.values$P.values
+        p_values <- data.frame(p_values)
+        p_values <- head(p_values, n = nrow(results))
+        results_all <- cbind(results, p_values)
+        print(results_all)
         
       }
     }
