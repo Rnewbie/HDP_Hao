@@ -5,7 +5,7 @@ date: "October 14, 2015"
 output: html_document
 ---
 
-Conformal Prediction using random forest
+Conformal Prediction using random forest at conconfidence level 0.80
 
 ```{r, cache = TRUE}
 library(caret)
@@ -16,17 +16,25 @@ data <- readRDS("data.Rda")
 in_train <- createDataPartition(data$Label, p = 0.8, list = FALSE)
 train <- data[in_train, ]
 test <- data[-in_train, ]
-algorithm <- "J48"
 trControl <- trainControl(method = "cv", number = 5, savePredictions = TRUE)
 set.seed(3)
 ### use test set only to save time
-model <- train(Label~., data = test, method = "rf",  trControl = trControl, predict.all = TRUE)
+model <- train(Label~., data = train, method = "rf",  trControl = trControl, predict.all = TRUE)
 
 
 example <- ConformalClassification$new()
 example$CalculateCVScores(model = model)
 example$CalculatePValues(new.data = test)
+results_confidence_0.8 <- example$ClassPredictions[1]
+
+data_confidence_0.8 <- as.factor(results_confidence_0.8)
+
+
+
 p_values <- (example$p.values$P.values)
+
+
+
 actual <- test$Label
 conformal_prediction_results <- cbind(p_values, actual)
 print(p_values)

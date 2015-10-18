@@ -112,7 +112,7 @@ KVLKAAAKAALNAVLVGANA
         p_values <- data.frame(p_values)
         p_values <- head(p_values, n = nrow(results))
         results_all <- cbind(results, p_values)
-        print(results_all)
+        print(results)
       } 
       else {     
         x <- readFASTA(inFile$datapath)
@@ -129,7 +129,7 @@ KVLKAAAKAALNAVLVGANA
         p_values <- data.frame(p_values)
         p_values <- head(p_values, n = nrow(results))
         results_all <- cbind(results, p_values)
-        print(results_all)
+        print(results)
         
       }
     }
