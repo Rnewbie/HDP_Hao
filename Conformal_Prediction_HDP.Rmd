@@ -16,16 +16,63 @@ data <- readRDS("data.Rda")
 in_train <- createDataPartition(data$Label, p = 0.8, list = FALSE)
 train <- data[in_train, ]
 test <- data[-in_train, ]
+in_proper <- createDataPartition(train$Label, p = 0.7, list = FALSE)
+proper <- train[in_proper, ]
+cal <- train[-in_proper, ]
 trControl <- trainControl(method = "cv", number = 5, savePredictions = TRUE)
 set.seed(3)
 ### use test set only to save time
-model <- train(Label~., data = train, method = "rf",  trControl = trControl, predict.all = TRUE)
+model <- train(Label~., data = cal, method = "rf",  trControl = trControl, predict.all = TRUE)
 
-
+### confidence 0.80
 example <- ConformalClassification$new()
 example$CalculateCVScores(model = model)
 example$CalculatePValues(new.data = test)
-results_confidence_0.8 <- example$ClassPredictions[1]
+results_confidence_0.8 <- example$ClassPredictions$aggregate
+results_prediction_0.8 <- as.data.frame(results_confidence_0.8)
+actual <- test$Label
+data_confidence_0.8 <- cbind(results_prediction_0.8, actual)
+data_confidence_0.8 <- example$p.values$Significance_p.values
+write.csv(data_confidence_0.8, file  = "data_confidence_0.8.csv")
+
+### confidence 0.85
+example_2 <- ConformalClassification$new()
+example_2$initialize(confi = 0.85)
+example_2 <- ConformalClassification$new()
+example_2$CalculateCVScores(model = model)
+example_2$CalculatePValues(new.data = test)
+results_confidence_0.85 <- example_2$ClassPredictions$aggregate
+results_prediction_0.85 <- as.data.frame(results_confidence_0.85)
+actual <- test$Label
+data_confidence_0.85 <- cbind(results_prediction_0.85, actual)
+data_confidence_0.85 <- example_2$p.values$Significance_p.values
+
+write.csv(data_confidence_0.85, file = "data_confidence_0.85.csv")
+### confidence 0.90
+example_3 <- ConformalClassification$new()
+example_3$initialize(confi = 0.90)
+example_3$CalculateCVScores(model = model)
+example_3$CalculatePValues(new.data = test)
+data_confidence_0.9 <- example_3$p.values$Significance_p.values)
+write.csv(data_confidence_0.9, file = "data_confidence_0.9.csv")
+
+
+example$initialize(0.90)
+example$CalculatePValues(new.data = test)
+
+data_1 <- read.csv("data_confidence_0.8.csv")
+data_2 <- read.csv("data_confidence_0.85.csv")
+data_3 <- read.csv("data_confidence_0.9.csv")
+
+data_1$Level <- c("0.80")
+data_2$Level <- c("0.85")
+data_3$Level <- c("0.90")
+
+data <- rbind(data_1, data_2, data_3)
+data$Level <- as.factor(data$Level)
+
+ggplot(data, aes(x = Bacteria, fill = Level)) + geom_bar()
+
 
 data_confidence_0.8 <- as.factor(results_confidence_0.8)
 
