@@ -33,7 +33,95 @@ results_prediction_0.8 <- as.data.frame(results_confidence_0.8)
 actual <- test$Label
 data_confidence_0.8 <- cbind(results_prediction_0.8, actual)
 data_confidence_0.8 <- example$p.values$Significance_p.values
-write.csv(data_confidence_0.8, file  = "data_confidence_0.8.csv")
+write.csv(data_confidence_0.8, file  = "data_confidence_0.8.csv", row.names = FALSE)
+library(reshape2)
+data <- read.csv("data_confidence_0.8.csv", header = TRUE)
+data <- as.data.frame(data)
+data <- cbind(sample = rownames(data), data)
+ok <- apply(data[, c("Bacteria", "Cancer", "Fungus", "Virus")], MARGIN = 1, FUN = sum)
+ok <- as.data.frame(ok)
+ok <- ok$ok
+ok <- factor(ok, levels = c(0, 1, 2, 3, 4), labels = c("Zero", "One", "Two", "Three", "Four"))
+data.m <- melt(data, id.vars = "sample")
+data.m <- cbind(data.m, ok)
+data.m$sample <- as.factor(data.m$sample)
+data.m$ok <- as.factor(data.m$ok)
+#levels(ok) <- ordered(ok, levels = c("0", "1", "2", "3", "4"))
+#ok <- as.data.frame(ok)
+### plot the stacked bar plot
+data <- data.m[, c("sample", "variable", "value", "ok")]
+data_2 <- data.frame(sample = factor(1), variable = "Null", value = 0, ok = "Zero")
+data <- rbind(data, data_2)
+ggplot(data, aes( x = variable)) + geom_bar(aes(weight = value, fill = ok),
+                                              position = 'fill') +
+  theme(
+    #legend.position = ("none"),
+    axis.text.y = element_text(color = "black", size = 20),
+    axis.ticks.length = unit(0.3, "cm"),
+    axis.text.x = element_text(color = "black", size = 20),
+    axis.text.y = element_text(color = "black", size = 20)) + xlab("") + ylab("")
+
+
+
+  
+
+
+#plot the stacked bar plot
+ggplot(df, aes(x = project)) + geom_bar(aes(weight=numbers, fill = component), position = 'fill') + scale_y_continuous("", breaks=NA) + scale_fill_manual(values = rev(brewer.pal(6, "Purples")))
+
+#plot the stacked bar plot with polar coordinates
+ggplot(df, aes(x = project)) + geom_bar(aes(weight=numbers, fill = component), position = 'fill') + scale_y_continuous("", breaks=NA) + scale_fill_manual(values = rev(brewer.pal(6, "Purples"))) + coord_polar()
+
+
+ggplot(data.m, aes(x = sample, y = value, fill = variable)) +
+  geom_bar(stat = "identity")
+
+
+
+
+
+
+bacteria <- data$Bacteria
+bacteria <- as.data.frame(bacteria)
+cancer <- data$Cancer
+cancer <- as.data.frame(cancer)
+fungus <- data$Fungus
+fungus <- as.data.frame(fungus)
+virus <- data$Virus
+virus <- as.data.frame(virus)
+library(ggplot2)
+
+ggplot() + geom_density(aes(x =bacteria), colour = "red", data = bacteria) +
+  geom_density(aes(x = cancer), colour = "blue", data = cancer) +
+  geom_density(aes(x = fungus), colour = "green", data = fungus) +
+  geom_density(aes(x = virus), colour = "black", data = virus)
+
+
+
+
+
+meltData <- melt(data_confidence_0.8)
+meltData <- meltData[, c("Var2", "value")]
+p <- ggplot(meltData, aes(x = Var2, y = value, fill = Var2)) + geom_boxplot() +
+  theme(
+    legend.position = ("none"),
+    axis.text.y = element_text(color = "black", size = 20),
+    axis.ticks.length = unit(0.3, "cm"),
+    axis.text.x = element_text(color = "black", size = 20),
+    axis.text.y = element_text(color = "black", size = 20)) + xlab("") + ylab("") 
+
+data <- example$p.values$Significance_p.values
+library(reshape2)
+meltData <- melt(data)
+meltData <- meltData[, c("Var2", "value")]
+
+        
+        
+p + theme(legend.title = element_text(face = "italic", family = "Times", colour = "red", size = 14)) + 
+
+
+
+
 
 ### confidence 0.85
 example_2 <- ConformalClassification$new()
