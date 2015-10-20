@@ -32,7 +32,7 @@ results_confidence_0.8 <- example$ClassPredictions$aggregate
 results_prediction_0.8 <- as.data.frame(results_confidence_0.8)
 actual <- test$Label
 data_confidence_0.8 <- cbind(results_prediction_0.8, actual)
-data_confidence_0.8 <- example$p.values$Significance_p.values
+data_confidence_0.8 <- example$p.values$P
 write.csv(data_confidence_0.8, file  = "data_confidence_0.8.csv", row.names = FALSE)
 
 set.seed(333)
@@ -40,7 +40,8 @@ library(reshape2)
 data <- read.csv("data_confidence_0.8.csv", header = TRUE)
 data <- as.data.frame(data)
 data <- cbind(sample = rownames(data), data)
-ok <- apply(data[, c("Bacteria", "Cancer", "Fungus", "Virus")], MARGIN = 1, FUN = sum)
+data_significant <- example$p.values$Significance_p.values
+ok <- apply(data_significant[, c("Bacteria", "Cancer", "Fungus", "Virus")], MARGIN = 1, FUN = sum)
 ok <- as.data.frame(ok)
 ok <- ok$ok
 ok <- factor(ok, levels = c(0, 1, 2, 3, 4), labels = c("Zero", "One", "Two", "Three", "Four"))
@@ -48,22 +49,23 @@ data.m <- melt(data, id.vars = "sample")
 data.m <- cbind(data.m, ok)
 data.m$sample <- as.factor(data.m$sample)
 data.m$ok <- as.factor(data.m$ok)
-data <- data.m
 #levels(ok) <- ordered(ok, levels = c("0", "1", "2", "3", "4"))
 #ok <- as.data.frame(ok)
 ### plot the stacked bar plot
 #data <- data.m[, c("sample", "variable", "value", "ok")]
-data_2 <- data.frame(sample = factor(1), variable = "Null", value = 0, ok = "Zero")
-data <- rbind(data, data_2)
-ggplot(data, aes(x = variable)) + geom_bar(aes(weight = value, fill = ok),
-                                              position = 'fill') +
+#data_2 <- data.frame(sample = factor(1), variable = "Null", value = 0, ok = "Zero")
+#data <- rbind(data, data_2)
+data <- data.m
+data$ok <- as.factor(ok)
+ggplot(data.m, aes(aes(factor(ok), valu))) + geom_boxplot(aes(weight = value, fill = variable), stat = "identity") +
   theme(
     #legend.position = ("none"),
     axis.text.y = element_text(color = "black", size = 20),
-    axis.ticks.length = unit(0.3, "cm"),
     axis.text.x = element_text(color = "black", size = 20),
     axis.title.y = element_text(color = "black", size = 30),
     axis.text.y = element_text(color = "black", size = 20)) + xlab(" ") + ylab("Count")
+
+
 
 ggplot(data, aes(x = ok)) + geom_bar(aes(weight = value, fill = variable),
                                               position = 'fill') +
