@@ -41,12 +41,23 @@ data <- read.csv("data_confidence_0.8.csv", header = TRUE)
 data <- as.data.frame(data)
 data <- cbind(sample = rownames(data), data)
 data_significant <- example$p.values$Significance_p.values
+data_significant <- as.data.frame(data_significant)
+bacteria <- data_significant$Bacteria
+cancer <- data_significant$Cancer
+fungus <- data_significant$Fungus
+virus <- data_significant$Virus
+count <- rbind(bacteria, cancer, fungus, virus)
+
+#bacteria <- nrow(subset(data_significant, Bacteria == 1))
+#cancer <- nrow(subset(data_significant, Cancer == 1))
+#fungus <- nrow(subset(data_significant, Fungus ==1))
+#virus <- nrow(subset(data_significant, Virus ==1))
+
 ok <- apply(data_significant[, c("Bacteria", "Cancer", "Fungus", "Virus")], MARGIN = 1, FUN = sum)
 ok <- as.data.frame(ok)
 ok <- ok$ok
-ok <- factor(ok, levels = c(0, 1, 2, 3, 4), labels = c("Zero", "One", "Two", "Three", "Four"))
 data.m <- melt(data, id.vars = "sample")
-data.m <- cbind(data.m, ok)
+data.m <- cbind(data.m, ok, count)
 data.m$sample <- as.factor(data.m$sample)
 data.m$ok <- as.factor(data.m$ok)
 #levels(ok) <- ordered(ok, levels = c("0", "1", "2", "3", "4"))
@@ -57,14 +68,70 @@ data.m$ok <- as.factor(data.m$ok)
 #data <- rbind(data, data_2)
 data <- data.m
 data$ok <- as.factor(ok)
-ggplot(data.m, aes(aes(factor(ok), valu))) + geom_boxplot(aes(weight = value, fill = variable), stat = "identity") +
+data <- data.frame(data)
+p1  <- ggplot(data, aes(x = ok, y = count, fill = variable)) + geom_boxplot() +
+  guides(fill = FALSE) + ggtitle("A") +
   theme(
-    #legend.position = ("none"),
+    plot.title = element_text(size = 30, face = "bold", vjust = -1.9, hjust = -.3),
+    legend.position = ("none"),
     axis.text.y = element_text(color = "black", size = 20),
     axis.text.x = element_text(color = "black", size = 20),
     axis.title.y = element_text(color = "black", size = 30),
     axis.text.y = element_text(color = "black", size = 20)) + xlab(" ") + ylab("Count")
+p1
 
+p2 <-  ggplot(data) + geom_boxplot(aes(x = variable, y = count, fill = ok)) + #geom_boxplot(aes(x = ok, y= count, fill = variable)) +
+  guides(fill = FALSE) + ggtitle("B") + 
+  theme(
+    plot.title = element_text(size = 30, face = "bold", vjust = -1.9, hjust = -.3),
+    legend.position = ("none"),
+    axis.text.y = element_text(color = "black", size = 20),
+    axis.text.x = element_text(color = "black", size = 20),
+    axis.title.y = element_text(color = "black", size = 30),
+    axis.text.y = element_text(color = "black", size = 20)) + xlab(" ") + ylab("Count")
+p2 + stat_summary(fun.data = min.mean.sd.max)
+
+multiplot <- function(..., plotlist = NULL, file, cols = 1, layout = NULL) {
+  require(grid)
+
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  if (is.null(layout)) {
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                 ncol = cols, nrow = ceiling(numPlots/cols))
+}
+
+if (numPlots == 1) {
+print(plots[[1]])
+
+} else {
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+for (i in 1:numPlots) {
+  matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+  print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                  layout.pos.col = matchidx$col))
+ }
+}
+ }
+
+
+multiplot(p1, p2)
+
+
+
+ggplot(data, aes(x = ok, y = value, fill = variable)) + geom_boxplot() +
+  guides(fill = FALSE) +
+  theme(
+    legend.position = ("none"),
+    axis.text.y = element_text(color = "black", size = 20),
+    axis.text.x = element_text(color = "black", size = 20),
+    axis.title.y = element_text(color = "black", size = 30),
+    axis.text.y = element_text(color = "black", size = 20)) + xlab(" ") + ylab("Count")
 
 
 ggplot(data, aes(x = ok)) + geom_bar(aes(weight = value, fill = variable),
@@ -173,6 +240,19 @@ example_3$CalculateCVScores(model = model)
 example_3$CalculatePValues(new.data = test)
 data_confidence_0.9 <- example_3$p.values$Significance_p.values)
 write.csv(data_confidence_0.9, file = "data_confidence_0.9.csv")
+
+### confidence 0.7
+example_4 <- ConformalClassification$new()
+example_4$initialize(confi = 0.70)
+example_4$CalculateCVScores(model = model)
+example_4$CAlculatePValues(new.data = test)
+data_confidence_0.7 <- example_4$p.vlaues$Significance_p.values
+### confidence 0.75
+exmapl_5 <- ConformalClassification$new()
+example_5$initialize(confi = 0.75)
+example_5$CalculateCVScores(model = model)
+example_5$CalculatePValues(new.data = test)
+data_confidence_0.75 <- example_5$p.vlaues$Significance_p.vales
 
 
 example$initialize(0.90)
