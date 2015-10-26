@@ -74,7 +74,7 @@ fungus <- readFASTA("fungus.fasta")
 bacteria <- readFASTA("bacteria.fasta")
 virus <- readFASTA("virus.fasta")
 mammal <- readFASTA("mammal.fasta")
-negative <- protr::readFASTA("negative_Protein.fasta")
+negative <- readFASTA("negative_Protein.fasta")
 
 ### removed wired protein
 cancer <- cancer[(sapply(cancer, protcheck))]
