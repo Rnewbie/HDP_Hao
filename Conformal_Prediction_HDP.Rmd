@@ -69,7 +69,7 @@ data.m$ok <- as.factor(data.m$ok)
 data <- data.m
 data$ok <- as.factor(ok)
 data <- data.frame(data)
-p1  <- ggplot(data, aes(x = ok, y = count, fill = variable)) + geom_boxplot() +
+p1  <- ggplot(data) + geom_boxplot(aes(x = ok, y = value, fill = variable)) + geom_boxplot(aes(x = variable, y = value, fill = ok)) +
   guides(fill = FALSE) + ggtitle("A") +
   theme(
     plot.title = element_text(size = 30, face = "bold", vjust = -1.9, hjust = -.3),
@@ -79,6 +79,23 @@ p1  <- ggplot(data, aes(x = ok, y = count, fill = variable)) + geom_boxplot() +
     axis.title.y = element_text(color = "black", size = 30),
     axis.text.y = element_text(color = "black", size = 20)) + xlab(" ") + ylab("Count")
 p1
+
+
+
+
+
+
+ggplot(data, aes(x = ok, y = value, fill = variable)) + geom_boxplot() +
+  guides(fill = FALSE) +
+  theme(
+    legend.position = ("none"),
+    axis.text.y = element_text(color = "black", size = 20),
+    axis.text.x = element_text(color = "black", size = 20),
+    axis.title.y = element_text(color = "black", size = 30),
+    axis.text.y = element_text(color = "black", size = 20)) + xlab(" ") + ylab("Count")
+
+
+
 
 p2 <-  ggplot(data) + geom_boxplot(aes(x = variable, y = count, fill = ok)) + #geom_boxplot(aes(x = ok, y= count, fill = variable)) +
   guides(fill = FALSE) + ggtitle("B") + 
@@ -248,7 +265,7 @@ example_4$CalculateCVScores(model = model)
 example_4$CAlculatePValues(new.data = test)
 data_confidence_0.7 <- example_4$p.vlaues$Significance_p.values
 ### confidence 0.75
-exmapl_5 <- ConformalClassification$new()
+example_5 <- ConformalClassification$new()
 example_5$initialize(confi = 0.75)
 example_5$CalculateCVScores(model = model)
 example_5$CalculatePValues(new.data = test)
