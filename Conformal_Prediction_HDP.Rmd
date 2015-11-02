@@ -32,7 +32,7 @@ results_confidence_0.8 <- example$ClassPredictions$aggregate
 results_prediction_0.8 <- as.data.frame(results_confidence_0.8)
 actual <- test$Label
 data_confidence_0.8 <- cbind(results_prediction_0.8, actual)
-data_confidence_0.8 <- example$p.values$P
+data_confidence_0.8 <- example$p.values$Significance_p.values
 write.csv(data_confidence_0.8, file  = "data_confidence_0.8.csv", row.names = FALSE)
 
 set.seed(333)
@@ -69,7 +69,11 @@ data.m$ok <- as.factor(data.m$ok)
 data <- data.m
 data$ok <- as.factor(ok)
 data <- data.frame(data)
-p1  <- ggplot(data) + geom_boxplot(aes(x = ok, y = value, fill = variable)) + geom_boxplot(aes(x = variable, y = value, fill = ok)) +
+library(plyr)
+p1 <- ggplot(data) + geom_bar(aes(x = variable, y = value, fill = ok, order = desc(ok)), stat = "identity") + geom_bar(aes(x = ok, y = value, fill = variable, desc(variable)), stat = "identity") 
+
+
+p1  <- ggplot(data) + geom_bar(aes(x = variable, y = value, fill = ok, order = desc(ok)), stat = "identity") + geom_bar(aes(x = ok, y = value, fill = variable, desc(variable)), stat = "identity") +
   guides(fill = FALSE) + ggtitle("A") +
   theme(
     plot.title = element_text(size = 30, face = "bold", vjust = -1.9, hjust = -.3),

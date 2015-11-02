@@ -22,7 +22,7 @@ results_confidence_0.8 <- example$ClassPredictions$aggregate
 results_prediction_0.8 <- as.data.frame(results_confidence_0.8)
 actual <- test$Label
 data_confidence_0.8 <- cbind(results_prediction_0.8, actual)
-data_confidence_0.8 <- example$p.values$P.values
+data_confidence_0.8 <- example$p.values$Significance_p.values
 write.csv(data_confidence_0.8, file  = "data_confidence_0.8.csv", row.names = FALSE)
 
 set.seed(333)
@@ -38,6 +38,11 @@ fungus <- data_significant$Fungus
 virus <- data_significant$Virus
 count <- rbind(bacteria, cancer, fungus, virus)
 ok <- apply(data_significant[, c("Bacteria", "Cancer", "Fungus", "Virus")], MARGIN = 1, FUN = sum)
+bacteria_sum <- apply(data_significant[ c("Bacteria")], MARGIN = 2, FUN = sum)
+cancer_sum <- apply(data_significant[ c("Cancer")], MARGIN = 2, FUN = sum)
+fungus_sum <- apply(data_significant[ c("Fungus")], MARGIN = 2, FUN = sum)
+virus_sum <- apply(data_significant[ c("Virus")], MARGIN = 2, FUN = sum)
+data_boss <- rbind(bacteria_sum, cancer_sum, fungus_sum, virus_sum)
 ok <- as.data.frame(ok)
 ok <- ok$ok
 data.m <- melt(data, id.vars = "sample")
@@ -53,10 +58,12 @@ data.m$ok <- as.factor(data.m$ok)
 data <- data.m
 data$ok <- as.factor(ok)
 data <- data.frame(data)
-p.80  <- ggplot(data) + geom_boxplot(aes(x = ok, y = value, fill = variable)) + geom_boxplot(aes(x = variable, y = value, fill = ok)) +
-  guides(fill = FALSE) + ggtitle("C") +
+p.80  <- ggplot(data) + geom_bar(aes(x = variable, y = value, fill = ok, order = desc(ok)), stat = "identity") + 
+  geom_bar(aes(x = ok, y = value, fill = variable, desc(variable)), stat = "identity") +
+  guides(fill = FALSE) + ggtitle("C") + scale_y_continuous(limits = c(0, 5000), breaks = c(0, 1000, 2000, 3000, 4000, 5000)) +
   theme(
     plot.title = element_text(size = 30, face = "bold", vjust = -1.9, hjust = -.3),
+    panel.border = element_rect(linetype = "solid", colour = "black", fill = NA, size = 1),
     legend.position = ("none"),
     axis.text.y = element_text(color = "black", size = 20),
     axis.text.x = element_text(color = "black", size = 20),
@@ -90,7 +97,7 @@ results_confidence_0.85 <- example_2$ClassPredictions$aggregate
 results_prediction_0.85 <- as.data.frame(results_confidence_0.85)
 actual <- test$Label
 data_confidence_0.85 <- cbind(results_prediction_0.85, actual)
-data_confidence_0.85 <- example_2$p.values$P.values
+data_confidence_0.85 <- example_2$p.values$Significance_p.values
 
 write.csv(data_confidence_0.85, file = "data_confidence_0.85.csv", row.names = FALSE)
 set.seed(333)
@@ -127,10 +134,12 @@ data.m$ok <- as.factor(data.m$ok)
 data <- data.m
 data$ok <- as.factor(ok)
 data <- data.frame(data)
-p.85  <- ggplot(data) + geom_boxplot(aes(x = ok, y = value, fill = variable)) + geom_boxplot(aes(x = variable, y = value, fill = ok)) +
-  guides(fill = FALSE) + ggtitle("D") +
+p.85  <- ggplot(data) +  geom_bar(aes(x = variable, y = value, fill = ok, order = desc(ok)), stat = "identity") + 
+  geom_bar(aes(x = ok, y = value, fill = variable, desc(variable)), stat = "identity") +
+  guides(fill = FALSE) + ggtitle("D") + scale_y_continuous(limits = c(0, 5000), breaks = c(0, 1000, 2000, 3000, 4000, 5000)) +
   theme(
     plot.title = element_text(size = 30, face = "bold", vjust = -1.9, hjust = -.3),
+    panel.border = element_rect(linetype = "solid", colour = "black", fill = NA, size = 1),
     legend.position = ("none"),
     axis.text.y = element_text(color = "black", size = 20),
     axis.text.x = element_text(color = "black", size = 20),
@@ -160,7 +169,7 @@ example_3 <- ConformalClassification$new()
 example_3$initialize(confi = 0.90)
 example_3$CalculateCVScores(model = model)
 example_3$CalculatePValues(new.data = test)
-data_confidence_0.9 <- example_3$p.values$P.values
+data_confidence_0.9 <- example_3$p.values$Significance_p.values
 write.csv(data_confidence_0.9, file = "data_confidence_0.9.csv", row.names = FALSE)
 
 
@@ -198,10 +207,12 @@ data.m$ok <- as.factor(data.m$ok)
 data <- data.m
 data$ok <- as.factor(ok)
 data <- data.frame(data)
-p.90  <- ggplot(data) + geom_boxplot(aes(x = ok, y = value, fill = variable)) + geom_boxplot(aes(x = variable, y = value, fill = ok)) +
-  guides(fill = FALSE) + ggtitle("E") +
+p.90  <- ggplot(data)  + geom_bar(aes(x = variable, y = value, fill = ok, order = desc(ok)), stat = "identity") + 
+  geom_bar(aes(x = ok, y = value, fill = variable, desc(variable)), stat = "identity") +
+  guides(fill = FALSE) + ggtitle("E") + scale_y_continuous(limits = c(0, 5000), breaks = c(0, 1000, 2000, 3000, 4000, 5000)) +
   theme(
     plot.title = element_text(size = 30, face = "bold", vjust = -1.9, hjust = -.3),
+    panel.border = element_rect(linetype = "solid", colour = "black", fill = NA, size = 1),
     legend.position = ("none"),
     axis.text.y = element_text(color = "black", size = 20),
     axis.text.x = element_text(color = "black", size = 20),
@@ -230,7 +241,7 @@ example_4 <- ConformalClassification$new()
 example_4$initialize(confi = 0.70)
 example_4$CalculateCVScores(model = model)
 example_4$CalculatePValues(new.data = test)
-data_confidence_0.7 <- example_4$p.values$P.values
+data_confidence_0.7 <- example_4$p.values$Significance_p.values
 
 write.csv(data_confidence_0.7, file = "data_confidence_0.7.csv", row.names = FALSE)
 
@@ -264,10 +275,12 @@ data.m$ok <- as.factor(data.m$ok)
 data <- data.m
 data$ok <- as.factor(ok)
 data <- data.frame(data)
-p.70  <- ggplot(data) + geom_boxplot(aes(x = ok, y = value, fill = variable)) + geom_boxplot(aes(x = variable, y = value, fill = ok)) +
-  guides(fill = FALSE) + ggtitle("A") +
+p.70  <- ggplot(data)  + geom_bar(aes(x = variable, y = value, fill = ok, order = desc(ok)), stat = "identity") + 
+  geom_bar(aes(x = ok, y = value, fill = variable, desc(variable)), stat = "identity") +
+  guides(fill = FALSE) + ggtitle("A") + scale_y_continuous(limits = c(0, 5000), breaks = c(0, 1000, 2000, 3000, 4000, 5000)) +
   theme(
     plot.title = element_text(size = 30, face = "bold", vjust = -1.9, hjust = -.3),
+    panel.border = element_rect(linetype = "solid", colour = "black", fill = NA, size = 1),
     legend.position = ("none"),
     axis.text.y = element_text(color = "black", size = 20),
     axis.text.x = element_text(color = "black", size = 20),
@@ -299,7 +312,7 @@ example_5 <- ConformalClassification$new()
 example_5$initialize(confi = 0.75)
 example_5$CalculateCVScores(model = model)
 example_5$CalculatePValues(new.data = test)
-data_confidence_0.75 <- example_5$p.values$P.values
+data_confidence_0.75 <- example_5$p.values$Significance_p.values
 
 write.csv(data_confidence_0.75, file = "data_confidence_0.75.csv", row.names = FALSE)
 
@@ -333,10 +346,12 @@ data.m$ok <- as.factor(data.m$ok)
 data <- data.m
 data$ok <- as.factor(ok)
 data <- data.frame(data)
-p.75  <- ggplot(data) + geom_boxplot(aes(x = ok, y = value, fill = variable)) + geom_boxplot(aes(x = variable, y = value, fill = ok)) +
-  guides(fill = FALSE) + ggtitle("B") +
+p.75  <- ggplot(data) +  geom_bar(aes(x = variable, y = value, fill = ok, order = desc(ok)), stat = "identity") + 
+  geom_bar(aes(x = ok, y = value, fill = variable, desc(variable)), stat = "identity") +
+  guides(fill = FALSE) + ggtitle("B") + scale_y_continuous(limits = c(0, 5000), breaks = c(0, 1000, 2000, 3000, 4000, 5000)) +
   theme(
     plot.title = element_text(size = 30, face = "bold", vjust = -1.9, hjust = -.3),
+    panel.border = element_rect(linetype = "solid", colour = "black", fill = NA, size = 1),
     legend.position = ("none"),
     axis.text.y = element_text(color = "black", size = 20),
     axis.text.x = element_text(color = "black", size = 20),
