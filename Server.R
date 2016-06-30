@@ -7,55 +7,26 @@ library(shinyjs)
 library(dplyr)
 library(conformal)
 
+cancer <- readFASTA("cancer.fasta")
+fungus <- readFASTA("fungus.fasta")
+bacteria <- readFASTA("bacteria.fasta")
+virus <- readFASTA("virus.fasta")
+negative <- readFASTA("negative_Protein.fasta")
 
-fit <- get(load("fit.RData"))
-#data <- readRDS("data.Rda")
-#bacteria <- subset(data, Label == "Bacteria")
-#cancer <- subset(data, Label == "Cancer")
-#fungus <- subset(data, Label == "Fungus")
-#virus <- subset(data, Label == "Virus")
-#bacteria <- dplyr::sample_n(bacteria, size = 500, replace = TRUE)
-#cancer <- dplyr::sample_n(cancer, size = 500, replace = TRUE)
-#fungus <- dplyr::sample_n(fungus, size = 500, replace = TRUE)
-#virus <- dplyr::sample_n(virus, size = 500, replace = TRUE)
-#wtf <- dplyr::sample_n(data, size = 4)
-#data <- rbind(bacteria, cancer, fungus, virus)
-example <- get(load("comformal.RData"))
-#Label <- data$Label
-#train <- data[, 1:20]
-#data <- readRDS("data.Rda")
-#showClass("ConformalClassification")
-#trControl <- trainControl(method = "cv", number = 5, savePredictions = TRUE)
-#model <- train(train, Label, data = data, method = "rf", trControl = trControl, predict.all = TRUE)
-#save(model, file = "model.RData")
-#save(example, file = "example.RData")
-#save(model, file = "fit.RData")
-x <- readFASTA("text.fasta")
-x <- x[(sapply(x, protcheck))]
-ACC <- t(sapply(x, extractAAC))
-test <- ACC
-#Prediction <- predict(fit, wtf)
-#Prediction <- as.data.frame(Prediction)
-#Protein <- cbind(Name = rownames(test, test))
-#results <- cbind(Protein, Prediction)
-#results <- data.frame(results, row.names=NULL)
-#example$CalculateCVScores(model = fit)
-example$CalculatePValues(new.data = test)
-p_values <- example$p.values$P.values
-comformal_predictor <- ConformalClassification$new()
-comformal_predictor$CalculateCVScores(model = fit)
-comformal_predictor$CalculatePValues(new.data = test)
-comformal_predictor$p.values
-save(comformal_predictor, file = "comformal.RData")
-#p_values <- data.frame(p_values)
-#p_values <- head(p_values, n = nrow(results))
-#results_all <- cbind(results, p_values)
-#print(results_all)
+## removed wired protein
+cancer <- cancer[(sapply(cancer, protcheck))]
+fungus <- fungus[(sapply(fungus, protcheck))]
+bacteira <- bacteira[(sapply(bacteria, protcheck))]
+virus <- virus[(sapply(virus, protcheck))]
+negative <- negative[(sapply(negative, protcheck))]
 
-#example <- ConformalClassification$new()
-#suppressMessages(example$CalculateCVScores(model = model))
+## function for aminoa acid composition
+composition <- function(x) {
+  library(protr)
+  c(extractAAC(x))
+}
 
-#save(example, file = "example.RData")
+### Generate the descriptors
 
 shinyServer(function(input, output, session) {
   
