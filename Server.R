@@ -6,27 +6,11 @@ library(randomForest)
 library(shinyjs)
 library(dplyr)
 library(conformal)
+library(RWeka)
 
-cancer <- readFASTA("cancer.fasta")
-fungus <- readFASTA("fungus.fasta")
-bacteria <- readFASTA("bacteria.fasta")
-virus <- readFASTA("virus.fasta")
-negative <- readFASTA("negative_Protein.fasta")
+combine_data <- readRDS("data.Rds")
 
-## removed wired protein
-cancer <- cancer[(sapply(cancer, protcheck))]
-fungus <- fungus[(sapply(fungus, protcheck))]
-bacteira <- bacteira[(sapply(bacteria, protcheck))]
-virus <- virus[(sapply(virus, protcheck))]
-negative <- negative[(sapply(negative, protcheck))]
-
-## function for aminoa acid composition
-composition <- function(x) {
-  library(protr)
-  c(extractAAC(x))
-}
-
-### Generate the descriptors
+fit <- J48(Label~., data = combine_data)
 
 shinyServer(function(input, output, session) {
   
@@ -78,11 +62,6 @@ KVLKAAAKAALNAVLVGANA
         Protein <- cbind(Name = rownames(test, test))
         results <- cbind(Protein, Prediction)
         results <- data.frame(results, row.names=NULL)
-        suppressMessages(example$CalculatePValues(new.data = test))
-        p_values <- example$p.values$P.values
-        p_values <- data.frame(p_values)
-        p_values <- head(p_values, n = nrow(results))
-        results_all <- cbind(results, p_values)
         print(results)
       } 
       else {     
@@ -95,11 +74,6 @@ KVLKAAAKAALNAVLVGANA
         Protein <- cbind(Name = rownames(test, test))
         results <- cbind(Protein, Prediction)
         results <- data.frame(results, row.names=NULL)
-        suppressMessages(example$CalculatePValues(new.data = test))
-        p_values <- example$p.values$P.values
-        p_values <- data.frame(p_values)
-        p_values <- head(p_values, n = nrow(results))
-        results_all <- cbind(results, p_values)
         print(results)
         
       }
